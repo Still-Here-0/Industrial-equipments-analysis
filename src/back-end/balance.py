@@ -1,32 +1,8 @@
-from utils.gekko_utils import init_gekko
-from utils.structs import Compositions, Flowns
-from typing import Optional
+from utils.structs import SolvedFlowns, InputFlowns, SolvedCompositions, InputCompositions
+from utils.gekko_utils import init_gekko, get_value
 
 
-def global_b(
-        B:  Optional[float], 
-        D:  Optional[float], 
-        Si: Optional[list[float]], 
-        Fi: Optional[list[float]]
-    ):
-    ...
-
-def comp_b(
-        B:   Optional[float],
-        xb:  Optional[float],
-        D:   Optional[float],
-        xd:  Optional[float],
-        Si:  Optional[list[float]], 
-        xsi: Optional[list[float]], 
-        Fi:  Optional[list[float]],
-        xfi: Optional[list[float]]
-    ):
-    ...
-
-def total_mass(
-        Q: Flowns,
-        C: Compositions
-    ):
+def total_mass(Q: InputFlowns, C: InputCompositions) -> tuple[SolvedFlowns, SolvedCompositions]:
     
     engine = init_gekko()
 
@@ -62,9 +38,48 @@ def total_mass(
 
     engine.solve(disp=False)
 
-    # Q_solved = Flowns(Fs=Fs.VALUE, )
+    Q_solved = SolvedFlowns( 
+        Fs = [get_value(Fi) for Fi in Fs],
+        D  = get_value(D),
+        B  = get_value(B),
+        Ss = [get_value(Si) for Si in Ss],
+    )
+
+    C_solved = SolvedCompositions(
+        Zfs = [get_value(Zfi) for Zfi in Zfs],
+        Xd  = get_value(Xd),
+        Xb  = get_value(Xb),
+        Xss = [get_value(Xsi) for Xsi in Xss],
+        Yd  = c.Yd
+    )
+
+    return Q_solved, C_solved
 
 if __name__ == "__main__":
-    q = Flowns      (Fs= [1000], D= None, B= None, Ss= None)
-    c = Compositions(Zfs=[0.5 ], Xd=0.95, Xb=0.05, Xss=None)
-    total_mass(q, c)
+
+    # Test 1
+    q = InputFlowns      (Fs= [1000], D= None, B= None, Ss= None)
+    c = InputCompositions(Zfs=[0.5 ], Xd=0.95, Xb=0.05, Xss=None)
+    Q, C = total_mass(q, c)
+    assert Q.D == 500 and Q.B == 500
+    print("## Passed T1")
+
+    # Test 3
+    q = InputFlowns      (Fs= [1000], D= None, B= None, Ss= [150.0])
+    c = InputCompositions(Zfs=[0.5 ], Xd=0.95, Xb=0.05, Xss=[ 0.8 ])
+    Q, C = total_mass(q, c)
+    assert Q.D == 375 and Q.B == 475
+    print("\n## Passed T2")
+
+    # Test 2
+    q = InputFlowns      (Fs= [1000, 200], D= None, B= None, Ss= [150])
+    c = InputCompositions(Zfs=[0.5 , 0.5], Xd=0.95, Xb=0.05, Xss=[0.8])
+    Q, C = total_mass(q, c)
+    assert Q.D == 475 and Q.B == 575
+    print("\n## Passed T3")
+
+    # Result
+    q = InputFlowns      (Fs=[1000], D= None, B= None, Ss= None)
+    c = InputCompositions(Zfs=[0.5], Xd=0.95, Xb=0.05, Xss=None)
+    Q, C = total_mass(q, c)
+    print(Q, C, sep='\n')
