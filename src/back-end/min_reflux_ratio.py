@@ -1,17 +1,15 @@
 from utils.gekko_utils import init_gekko, get_value
-from utils.structs import SolvedCompositions
-from gekko.gk_operators import GK_Value
+from utils.structs import SolvedCompositions, InputOtherParam
 from utils import get_eq_data
 
-def min_reflux_ratio(C: SolvedCompositions, beta_f: float, eq: bool) -> float:
-    assert beta_f >= 0 and beta_f <= 1
+def min_reflux_ratio(C: SolvedCompositions, O: InputOtherParam, eq: bool) -> float:
 
     R_rmin: float = float('-inf')
 
-    Xf:     float | GK_Value
-    Yf:     float | GK_Value
+    Xf:     float | int
+    Yf:     float | int
 
-    for Zf in C.Zfs: # TODO: beta must be a array two
+    for Zf, beta_f in zip(C.Zfs, O.beta_fzs): # TODO: beta must be a array two
 
         if eq: # alpha can be calculated locally
             Xf, Yf, alpha = inlet_comp_by_eq_curve(Zf, beta_f)
@@ -24,15 +22,15 @@ def min_reflux_ratio(C: SolvedCompositions, beta_f: float, eq: bool) -> float:
     return R_rmin
 
 def inlet_comp_by_eq_curve(
-        Zf:     float | GK_Value, 
-        beta_f: float | GK_Value
-    ) -> tuple[float | GK_Value, float | GK_Value, float | GK_Value]:
+        zf:     float | int, 
+        beta_f: float | int
+    ) -> tuple[float | int, float | int, float | int]:
     
     x_data, y_data = get_eq_data()
 
     engine = init_gekko()
 
-    Zf = engine.Const(Zf)       # type: ignore
+    Zf = engine.Const(zf)       # type: ignore
     b  = engine.Const(beta_f)   # type: ignore
 
     alpha   = engine.Var(lb=0)
@@ -68,14 +66,16 @@ if __name__ == "__main__":
     print("\n\nreflux_ratio TEST")
     # Test 1
     c = SolvedCompositions(Zfs=[0.5], Xd=0.95, Yd=None, Xb=0.05, Xss=None)
-    R_rmin = min_reflux_ratio(c, 0, eq=True)
+    o = InputOtherParam(beta_zs=[0], beta_d=0, beta_b=1)
+    R_rmin = min_reflux_ratio(c, o, eq=True)
     assert round(R_rmin, 3) == 0.957
     print("## Passed T1")
 
     # Result
     beta_f = 0
     c = SolvedCompositions(Zfs=[0.5], Xd=0.95, Xb=0.05, Xss=None, Yd=None)
-    R_rmin = min_reflux_ratio(c, beta_f, eq=True)
+    o = InputOtherParam(beta_zs=[0], beta_d=0, beta_b=1)
+    R_rmin = min_reflux_ratio(c, o, eq=True)
     print(f"Result: {R_rmin}")
 
 

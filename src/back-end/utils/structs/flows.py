@@ -1,5 +1,5 @@
-from gekko.gk_operators import GK_Value
 from typing import Optional
+
 
 
 class InputFlowns:
@@ -7,10 +7,10 @@ class InputFlowns:
     def __init__(
             self, 
             *, 
-            Fs: list[Optional[float | GK_Value]],          # Inlet flows
-            D: Optional[float | GK_Value],                 # Top outlet flow 
-            B: Optional[float | GK_Value],                 # Bottom outlet flow
-            Ss: Optional[list[Optional[float | GK_Value]]] # Outlet flow
+            Fs: list[Optional[float | int]],                   # Inlet flows
+            D: Optional[float | int],                          # Top outlet flow 
+            B: Optional[float | int],                          # Bottom outlet flow
+            Ss: Optional[list[Optional[float | int]]] = None   # Outlet flow
         ) -> None:
 
         self.Fs = Fs
@@ -23,10 +23,10 @@ class SolvedFlowns:
     def __init__(
             self, 
             *, 
-            Fs: list[float | GK_Value],          # Inlet flows
-            D: float | GK_Value,                 # Top outlet flow 
-            B: float | GK_Value,                 # Bottom outlet flow
-            Ss: Optional[list[float | GK_Value]] # Outlet flow
+            Fs: list[float | int],          # Inlet flows
+            D: float | int,                 # Top outlet flow 
+            B: float | int,                 # Bottom outlet flow
+            Ss: Optional[list[float | int]] # Outlet flow
         ) -> None:
 
         self.Fs = Fs

@@ -1,15 +1,14 @@
-from utils.structs import SolvedFlowns, SolvedCompositions, InputOtherParam
+from utils.structs import SolvedCompositions
 from utils.gekko_utils import init_gekko, get_value
-from gekko.gk_operators import GK_Value
 from utils import get_eq_data
 
 
-def number_of_teorical_stages(
-        X_sec: list[float | GK_Value], 
-        lin_coef: list[float | GK_Value], 
-        ang_coef: list[float | GK_Value], 
+def stages_points(
+        X_sec: list[float | int], 
+        lin_coef: list[float | int], 
+        ang_coef: list[float | int], 
         C: SolvedCompositions
-    ) -> tuple[list[float | GK_Value], list[float | GK_Value]]:
+    ) -> tuple[list[float | int], list[float | int]]:
     
     if C.Yd is None:    # Total condenser 
         Xs, Ys = solve_for_total_condenser(X_sec, lin_coef, ang_coef, C)
@@ -19,11 +18,11 @@ def number_of_teorical_stages(
     return Xs, Ys
 
 def solve_for_total_condenser(
-        X_sec: list[float | GK_Value],
-        lin_coef: list[float | GK_Value],
-        ang_coef: list[float | GK_Value],
+        X_sec: list[float | int],
+        lin_coef: list[float | int],
+        ang_coef: list[float | int],
         C: SolvedCompositions
-    ) -> tuple[list[float | GK_Value], list[float | GK_Value]]:
+    ) -> tuple[list[float | int], list[float | int]]:
 
     Xs = [C.Xd]
     Ys = [C.Xd]
@@ -32,7 +31,7 @@ def solve_for_total_condenser(
 
         Xi, _, _ = eq_curve(None, Ys[-1]) # type: ignore
         Yi = Ys[-1]
-        Xs.append(Xi)
+        Xs.append(get_value(Xi))
         Ys.append(Yi)
 
         for id, X_sec_i in enumerate(X_sec):
@@ -44,11 +43,15 @@ def solve_for_total_condenser(
                 Xs.append(Xi)
                 break
         else:
+            Xi = Xs[-1]
+            Yi = lin_coef[id] + ang_coef[id]*Xi
+            Ys.append(Yi)
+            Xs.append(Xi)
             break
 
     return Xs, Ys
     
-def eq_curve(xi:float | None, yi:float | None) -> tuple[GK_Value | float, GK_Value | float, GK_Value | float]:
+def eq_curve(xi:float | None, yi:float | None) -> tuple[int | float, int | float, int | float]:
     assert xi is not None or yi is not None
     assert xi is None or yi is None
     
@@ -79,12 +82,12 @@ if __name__ == "__main__":
     print("Eq. test 3:", eq_curve(None, 0.73))
     print("Eq. test 4:", eq_curve(None, 0.3))
 
-    X_sec = [0.75, 0.05]
+    X_sec =    [0.5, 0.05]
     ang_coef = [0.5876288659793814, 1.4123711340206186]
     lin_coef = [0.3917525773195876, -0.020618556701030927]
     c = SolvedCompositions(Zfs= [0.5 ], Xd= 0.95, Xb=0.05,  Xss=None, Yd=None)
 
-    Xs, Ys = number_of_teorical_stages(X_sec, lin_coef, ang_coef, c) # type: ignore
+    Xs, Ys = stages_points(X_sec, lin_coef, ang_coef, c) # type: ignore
 
     import matplotlib.pyplot as plt
     import numpy as np
@@ -96,9 +99,9 @@ if __name__ == "__main__":
     engine.cspline(par, v, x, y)
     engine.solve(disp=False)
 
-    r1_x = np.linspace(0, 1) 
+    r1_x = np.linspace(0.5, 1) 
     r1_y = ang_coef[0]*r1_x + lin_coef[0]
-    r2_x = np.linspace(0, 1) 
+    r2_x = np.linspace(0, 0.5) 
     r2_y = ang_coef[1]*r2_x + lin_coef[1]
 
     plt.plot(par, v, 'b:', label='spline') # type: ignore
@@ -106,7 +109,7 @@ if __name__ == "__main__":
     plt.plot(r1_x, r1_y, 'm--', label="R1")
     plt.plot(r2_x, r2_y, 'y--', label="R2")
     plt.plot(x, y, 'g.', label='data')
-    # plt.plot(Xs, Ys, 'ro')
+    plt.plot(Xs, Ys, 'ro')
     plt.legend()
     plt.grid()
     plt.show()

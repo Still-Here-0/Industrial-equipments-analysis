@@ -1,5 +1,6 @@
 from utils.structs import SolvedFlowns, SolvedCompositions, InputOtherParam
-from gekko.gk_operators import GK_Value
+
+
 
 def section_fase(
         R_rmin: float, 
@@ -7,17 +8,17 @@ def section_fase(
         Q: SolvedFlowns, 
         O: InputOtherParam, 
         C: SolvedCompositions
-    ) -> tuple[list[float | GK_Value], list[float], list[float]]:
+    ) -> tuple[list[float | int], list[float | int], list[float | int]]:
     
     R_rop = corr*R_rmin
     
     # First stage
     stage = 0
-    Ls: list[float] = [R_rop*Q.D]
-    Vs: list[float] = [Q.D*(R_rop + 1)]
-    ang_coef_s: list[float] = [Ls[0]/Vs[0]]
-    in_and_outs: list[float] = [-Q.D*C.Xd] # TODO: assumindo condensador total Xd == Yd
-    lin_coef_s: list[float] = [-(1/Vs[0])*sum(in_and_outs[:1])]
+    Ls: list[float | int] = [R_rop*Q.D]
+    Vs: list[float | int] = [Q.D*(R_rop + 1)]
+    ang_coef_s: list[float | int] = [Ls[0]/Vs[0]]
+    in_and_outs: list[float | int] = [-Q.D*C.Xd] # TODO: assumindo condensador total Xd == Yd
+    lin_coef_s: list[float | int] = [-(1/Vs[0])*sum(in_and_outs[:1])]
 
     # Outlet stages TODO: confirmar se os calculos dessa parte estao corretas
     if Q.Ss is not None and O.beta_ss is not None and C.Xss is not None and False: # TODO: Not implemented
@@ -40,19 +41,19 @@ def section_fase(
         stage += 1
         ang_coef_s.append(Ls[stage]/Vs[stage])
         in_and_outs.append(Fi*Zfi)
-        lin_coef_s.append(-(1/Vs[0])*sum(in_and_outs[:stage + 1]))
+        lin_coef_s.append(-(1/Vs[stage])*sum(in_and_outs[:stage + 1]))
     
-    X_sec_s: list[float | GK_Value] = []
+    X_sec_s: list[float | int] = []
     # Y_sec_s: list[float | None] = [None] TODO: Rever se o Y é realmente necessario
     
-    a = 1
-    while a <= stage:
-        X_sec_s.append((Vs[a]*in_and_outs[a - 1] - Vs[a - 1]*in_and_outs[a])/(Ls[a - 1]*Vs[a] - Ls[a]*Vs[a - 1]))
+    intersession = 1
+    while intersession <= stage:
+        X_sec_s.append((Vs[intersession]*sum(in_and_outs[:intersession]) - Vs[intersession - 1]*sum(in_and_outs[:intersession + 1]))/(Ls[intersession - 1]*Vs[intersession] - Ls[intersession]*Vs[intersession - 1]))
 
         # if a < stage:
         #     Y_sec_s.append((Ls[a]*in_and_outs[a - 1] - Ls[a - 1]*in_and_outs[a])/(Ls[a - 1]*Vs[a] - Ls[a]*Vs[a - 1]))
 
-        a += 1
+        intersession += 1
 
     # Y_sec_s.append(None)
     X_sec_s.append(C.Xb) #type: ignore
