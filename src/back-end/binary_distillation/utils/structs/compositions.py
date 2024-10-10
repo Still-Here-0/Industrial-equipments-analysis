@@ -29,7 +29,7 @@ class SolvedCompositions:
             Xd:  float | int,                # Fluid composition of top outlet flow 
             Xb:  float | int,                # Fluid composition of bottom outlet flow
             Xss: Optional[list[float | int]],# Fluid composition of outlet flow
-            Yd:  Optional[float | int],                 # Vapor composition of top outlet flow
+            Yd:  float | int,                 # Vapor composition of top outlet flow
         ) -> None:
         
         self.Zfs = Zfs

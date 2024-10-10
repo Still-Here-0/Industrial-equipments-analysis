@@ -50,7 +50,7 @@ def total_mass(Q: InputFlowns, C: InputCompositions) -> tuple[SolvedFlowns, Solv
         Xd  = get_value(Xd),
         Xb  = get_value(Xb),
         Xss = [get_value(Xsi) for Xsi in Xss],
-        Yd  = C.Yd if C.Yd is None else get_value(C.Yd)
+        Yd  = get_value(Xd) if C.Yd is None else get_value(C.Yd)
     )
 
     return Q_solved, C_solved

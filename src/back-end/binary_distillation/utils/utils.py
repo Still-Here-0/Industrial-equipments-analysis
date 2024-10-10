@@ -4,7 +4,7 @@ import os
 
 
 def get_eq_data() -> tuple[list[float], list[float]]:
-    DIR = str(Path(os.path.dirname(__file__)).parent.parent) + "\\data\\equilibrium_curve.csv"
+    DIR = str(Path(os.path.dirname(__file__)).parent.parent.parent) + "\\data\\equilibrium_curve.csv"
     eq_data = pd.read_csv(DIR)
     x_data = list(eq_data['x'])
     y_data = list(eq_data['y'])

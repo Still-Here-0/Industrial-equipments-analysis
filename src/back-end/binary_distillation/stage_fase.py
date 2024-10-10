@@ -1,27 +1,46 @@
-from utils.structs import SolvedCompositions
+from utils.structs import SolvedCompositions, System, CondenserType, EqType
 from utils.gekko_utils import init_gekko, get_value
 from utils import get_eq_data
 
 
 def stages_points(
         X_sec: list[float | int], 
+        Y_sec: list[float | int], 
         lin_coef: list[float | int], 
         ang_coef: list[float | int], 
-        C: SolvedCompositions
+        C: SolvedCompositions,
+        S: System
     ) -> tuple[list[float | int], list[float | int]]:
     
-    if C.Yd is None:    # Total condenser 
-        Xs, Ys = solve_for_total_condenser(X_sec, lin_coef, ang_coef, C)
-    else:               # Parcial condenser
+    pinch = check_for_pinch(X_sec, Y_sec, S)
+
+    if pinch:
+        print("System PINCHED")
+        return [], []
+    elif S._cond_state == CondenserType.Total:
+        Xs, Ys = solve_for_total_condenser(X_sec, lin_coef, ang_coef, C, S)
+    else:               # TODO: Parcial condenser
         ...
 
     return Xs, Ys
+
+def check_for_pinch(X_sec: list[float | int], Y_sec: list[float | int], S: System):
+    
+    for xi, yi in zip(X_sec, Y_sec):
+
+        _, y_eq, _ = S.get_eq_data(xi=xi)
+
+        if y_eq < yi:
+            return True
+    
+    return False
 
 def solve_for_total_condenser(
         X_sec: list[float | int],
         lin_coef: list[float | int],
         ang_coef: list[float | int],
-        C: SolvedCompositions
+        C: SolvedCompositions,
+        S: System
     ) -> tuple[list[float | int], list[float | int]]:
 
     Xs = [C.Xd]
@@ -29,14 +48,14 @@ def solve_for_total_condenser(
 
     while True:
 
-        Xi, _, _ = eq_curve(None, Ys[-1]) # type: ignore
+        Xi, _, _ = S.get_eq_data(yi=Ys[-1])
         Yi = Ys[-1]
         Xs.append(get_value(Xi))
         Ys.append(Yi)
 
         for id, X_sec_i in enumerate(X_sec):
 
-            if Xi > X_sec_i:
+            if Xi >= X_sec_i:
                 Xi = Xs[-1]
                 Yi = lin_coef[id] + ang_coef[id]*Xi
                 Ys.append(Yi)
@@ -50,44 +69,18 @@ def solve_for_total_condenser(
             break
 
     return Xs, Ys
-    
-def eq_curve(xi:float | None, yi:float | None) -> tuple[int | float, int | float, int | float]:
-    assert xi is not None or yi is not None
-    assert xi is None or yi is None
-    
-    x_data, y_data = get_eq_data()
-
-    engine = init_gekko(2)
-
-    Xi  = engine.Var(lb=0, ub=1, value=0.5)   #type: ignore
-    Yi  = engine.Var(lb=0, ub=1, value=0.5)   #type: ignore
-
-    alpha   = engine.Var(lb=0)
-
-    engine.cspline(Xi, Yi, x_data, y_data)
-    engine.Equation(Xi == Yi/(Yi + alpha*(1 - Yi)))
-
-    if xi is None:
-        engine.Equation(Yi == yi)
-    else:
-        engine.Equation(Xi == xi)
-
-    engine.solve(disp=False)
-
-    return get_value(Xi), get_value(Yi), get_value(alpha)
 
 if __name__ == "__main__":
-    print("Eq. test 1:", eq_curve(0.5, None))
-    print("Eq. test 2:", eq_curve(0.98, None))
-    print("Eq. test 3:", eq_curve(None, 0.73))
-    print("Eq. test 4:", eq_curve(None, 0.3))
+    from utils.structs import CondenserType, BoilerType, EqType
 
     X_sec =    [0.5, 0.05]
+    Y_sec =    [0.6848214285714286]
     ang_coef = [0.5876288659793814, 1.4123711340206186]
     lin_coef = [0.3917525773195876, -0.020618556701030927]
-    c = SolvedCompositions(Zfs= [0.5 ], Xd= 0.95, Xb=0.05,  Xss=None, Yd=None)
+    c = SolvedCompositions(Zfs= [0.5 ], Xd= 0.95, Xb=0.05,  Xss=None, Yd=0.95)
+    s = System(CondenserType.Total, BoilerType.Total, EqType.EqCurve)
 
-    Xs, Ys = stages_points(X_sec, lin_coef, ang_coef, c) # type: ignore
+    Xs, Ys = stages_points(X_sec, Y_sec, lin_coef, ang_coef, c, s)
 
     import matplotlib.pyplot as plt
     import numpy as np
