@@ -1,8 +1,8 @@
+from ....sys_utils import PrintableClass
 from typing import Optional
 
 
-
-class InputFlowns:
+class FlowInput:
 
     def __init__(
             self, 
@@ -18,7 +18,7 @@ class InputFlowns:
         self.B  = B
         self.Ss = Ss
 
-class SolvedFlowns:
+class SolvedFlow(PrintableClass):
 
     def __init__(
             self, 
@@ -26,7 +26,7 @@ class SolvedFlowns:
             Fs: list[float | int],          # Inlet flows
             D: float | int,                 # Top outlet flow 
             B: float | int,                 # Bottom outlet flow
-            Ss: Optional[list[float | int]] # Outlet flow
+            Ss: list[float | int] # Outlet flow
         ) -> None:
 
         self.Fs = Fs
@@ -34,5 +34,3 @@ class SolvedFlowns:
         self.B  = B
         self.Ss = Ss
     
-    def __str__(self) -> str:
-        return f"Comp:\n\tFs - {self.Fs}\n\tD  - {self.D}\n\tB  - {self.B}\n\tSs - {self.Ss}"

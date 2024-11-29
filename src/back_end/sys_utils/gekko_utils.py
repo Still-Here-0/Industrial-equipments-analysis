@@ -3,10 +3,10 @@ from gekko.gk_variable import GKVariable
 from gekko import GEKKO
 from typing import Any
 
-def init_gekko(mode=None) -> GEKKO:
+def init_gekko(mode=1) -> GEKKO:
     engine = GEKKO(remote=False)
-    engine.options.IMODE = 1 if mode is None else mode #type: ignore
-    engine.options.SOLVER = 1                          #type: ignore
+    engine.options.IMODE = mode #type: ignore
+    engine.options.SOLVER = 1   #type: ignore
 
     return engine
 
@@ -15,7 +15,10 @@ def get_value(var: GK_Operators | GKVariable | Any) -> float | int:
     if var is None:
         raise Exception("Value can not be None")
     elif isinstance(var, GKVariable):
-        return var.VALUE[0]
+        try:
+            return var.VALUE[0]
+        except TypeError:
+            return var.VALUE.value
     elif isinstance(var, GK_Intermediate):
         return var.VALUE[0]
     elif isinstance(var, GK_Operators):

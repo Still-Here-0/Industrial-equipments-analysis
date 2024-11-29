@@ -1,8 +1,7 @@
+from ....sys_utils import PrintableClass
 from typing import Optional
 
-
-
-class InputCompositions:
+class CompositionInput:
 
     def __init__(
             self, 
@@ -20,7 +19,7 @@ class InputCompositions:
         self.Xb = Xb
         self.Xss = Xss
 
-class SolvedCompositions:
+class SolvedComposition(PrintableClass):
 
     def __init__(
             self, 
@@ -28,8 +27,8 @@ class SolvedCompositions:
             Zfs: list[float | int],          # Composition of inlet flows
             Xd:  float | int,                # Fluid composition of top outlet flow 
             Xb:  float | int,                # Fluid composition of bottom outlet flow
-            Xss: Optional[list[float | int]],# Fluid composition of outlet flow
-            Yd:  float | int,                 # Vapor composition of top outlet flow
+            Xss: list[float | int],# Fluid composition of outlet flow
+            Yd:  float | int,                # Vapor composition of top outlet flow
         ) -> None:
         
         self.Zfs = Zfs
@@ -37,6 +36,3 @@ class SolvedCompositions:
         self.Yd = Yd
         self.Xb = Xb
         self.Xss = Xss
-    
-    def __str__(self) -> str:
-        return f"Comp:\n\tZfs - {self.Zfs}\n\tXd  - {self.Xd}\n\tXb  - {self.Xb}\n\tXss - {self.Xss}"
